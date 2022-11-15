@@ -5,31 +5,36 @@ const rqListener = (req, res) => {
   const url = req.url;
   const method = req.method;
 
-  res.setHeader("Content-Type", "text/html");
-  res.write("<html>");
+  if (url === "/") {
+    res.setHeader("Content-Type", "text/html");
+    res.write("<html>");
+    res.write("<h1>Enter message<h1/>");
+    res.write(
+      "<form action='/message' method='POST'> <input type='text' name='message'/> <button type='submit'>Submit</button></form/>"
+    );
+    res.write("</html>");
+    return res.end();
+  } else if (url === "/message" && method === "POST") {
+    const body = [];
 
-  switch (url) {
-    case "/":
-      res.write("<h1>Enter message<h1/>");
-      res.write(
-        "<form action='/message' method='POST'> <input type='text' name='message'/> <button type='submit'>Submit</button></form/>"
-      );
-      break;
-    case "/message":
-      if (method === "POST") {
-        res.write("<h1>TEST</h1>");
-        fs.writeFileSync("message.txt", "DUMMY");
-        res.statusCone = 302;
-        res.setHeader("Location", "/");
-      }
-      break;
+    req.on("data", (chunk) => {
+      console.log("🚀 ~ file: app.js ~ line 21 ~ req.on ~ chunk", chunk);
+      body.push(chunk);
+    });
+    req.on("end", () => {
+      const parseBody = Buffer.concat(body).toString();
+      const message = parseBody.split("=")[1];
+      fs.writeFileSync("message.txt", message);
+    });
+
+    res.setHeader("Content-Type", "text/html");
+    res.setHeader("Location", "/");
+    res.write("<html>");
+    res.write("<h1>TEST</h1>");
+
+    res.statusCode = 302;
+    res.end();
   }
-  console.log("🚀 ~ file: app.js ~ line 4 ~ rqListener ~ req", req.url);
-  console.log("🚀 ~ file: app.js ~ line 4 ~ rqListener ~ req", req.method);
-  console.log("🚀 ~ file: app.js ~ line 4 ~ rqListener ~ req", req.headers);
-
-  res.write("</html>");
-  res.end();
 };
 
 const server = http.createServer(rqListener);
